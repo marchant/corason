@@ -1,6 +1,11 @@
 *.class
 
 # Package Files #
-*.jar
 *.war
 *.ear
+target
+bin
+*.xcodeproj
+*.pbxproj
+ant.*
+dist
