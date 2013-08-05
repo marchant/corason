@@ -1,0 +1,3 @@
+# Default value options for copy mode.
+# fr.sophiacom.corason.foundation.eo.COCopyable.defaultCopyMode=DEEP
+fr.sophiacom.corason.foundation.eo.COCopyable.defaultCopyMode=SHALLOW
