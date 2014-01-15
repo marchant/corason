@@ -20,6 +20,7 @@ import com.webobjects.foundation.NSTimestamp;
 
 import er.corebusinesslogic.ERCStampedEnterpriseObject;
 import er.extensions.foundation.ERXProperties;
+import er.extensions.foundation.ERXValueUtilities;
 
 
 /**
@@ -35,7 +36,7 @@ public interface COCopyable
 {
 	public static Logger log = Logger.getLogger(COCopyable.class);
 
-	public static final String isAttributeCopyableKey = "isAttributeCopyable";
+	public static final String isCopyableKey = "isAttributeCopyable";
 
 	public enum COCopyMode
 	{
@@ -132,14 +133,14 @@ public interface COCopyable
 		{
 			EOGlobalID globalID = source.editingContext().globalIDForObject(source);
 			if (log.isDebugEnabled())
-				log.debug("Copying object: " + globalID);
+				log.debug("Method: copy /object: " + globalID);
 
 			EOEnterpriseObject copy = copiedObjects.objectForKey(globalID);
 
 			if (copy == null)
 			{
 				if (log.isDebugEnabled())
-					log.debug("Creating duplicate of object: " + globalID);
+					log.debug("Method: copy /creating duplicate of object: " + globalID);
 				copy = ((COCopyable)source).duplicate(copiedObjects, copyContext);
 				copiedObjects.setObjectForKey(copy, globalID);
 				// If there is a real copy, the created and lastModified attributes are updated.
@@ -228,7 +229,7 @@ public interface COCopyable
 		public static EOEnterpriseObject referenceCopy(final EOEnterpriseObject source)
 		{
 			if (log.isDebugEnabled())
-				log.debug("Reference copying: " + globalIDForObject(source));
+				log.debug("Method: referenceCopy /source globalID: " + globalIDForObject(source));
 			return source;
 		}
 
@@ -246,7 +247,7 @@ public interface COCopyable
 		public static EOEnterpriseObject shallowCopy(final NSMutableDictionary<Object, EOEnterpriseObject> copiedObjects, final EOEnterpriseObject source)
 		{
 			if (log.isDebugEnabled())
-				log.debug("Making shallow copy of: " + globalIDForObject(source));
+				log.debug("Method: shallowCopy/ source globalID: " + globalIDForObject(source));
 
 			EOEnterpriseObject copy = newInstance(source);
 
@@ -275,7 +276,7 @@ public interface COCopyable
 		public static EOEnterpriseObject deepCopy(final NSMutableDictionary<Object, EOEnterpriseObject> copiedObjects, final EOEnterpriseObject source, final String copyContext)
 		{
 			if (log.isDebugEnabled())
-				log.debug("Making deep copy of: " + globalIDForObject(source));
+				log.debug("Method: deepCopy/ source globalID: " + globalIDForObject(source));
 
 			EOEnterpriseObject copy = newInstance(source);
 
@@ -306,7 +307,7 @@ public interface COCopyable
 		public static EOEnterpriseObject newInstance(final EOEnterpriseObject source)
 		{
 			if (log.isDebugEnabled())
-				log.debug("Making new instance of: " + globalIDForObject(source));
+				log.debug("Method: newInstance/ source globalID: " + globalIDForObject(source));
 
 			EOEnterpriseObject newInstance = EOUtilities.createAndInsertInstance(source.editingContext(), source.entityName());
 			cleanRelationships(source, newInstance);
@@ -330,7 +331,7 @@ public interface COCopyable
 		public static void cleanRelationships(final EOEnterpriseObject source, final EOEnterpriseObject copy)
 		{
 			if (log.isDebugEnabled())
-				log.debug("Cleaning related objects in copy of: " + globalIDForObject(source));
+				log.debug("Method: cleanRelationships/ source globalID: " + globalIDForObject(source));
 
 			EOEditingContext ec = source.editingContext();
 			// To-Many relationships
@@ -345,7 +346,7 @@ public interface COCopyable
 				if (relatedObjects.count() > 0) {
 
 					if (log.isDebugEnabled())
-						log.debug("Removing objects in to-many relationship: " + relationshipName);
+						log.debug("Method: cleanRelationships/removing objects in to-many relationship (name): " + relationshipName);
 
 					Enumeration<EOEnterpriseObject> relatedObjectEnumerator = new NSArray<EOEnterpriseObject>(relatedObjects).objectEnumerator();
 
@@ -369,7 +370,7 @@ public interface COCopyable
 				if (relatedObject != null)
 				{
 					if (log.isDebugEnabled())
-						log.debug("Removing object in to-one relationship: " + relationshipName);
+						log.debug("Method: cleanRelationships/ removing object in to-one relationship (name): " + relationshipName);
 
 					copy.removeObjectFromBothSidesOfRelationshipWithKey(relatedObject, relationshipName);
 
@@ -395,7 +396,7 @@ public interface COCopyable
 		public static void copyAttributes(final EOEnterpriseObject source, final EOEnterpriseObject destination)
 		{
 			if (log.isDebugEnabled())
-				log.debug("Copying attributes for: " + globalIDForObject(source));
+				log.debug("Method copyAttributes/ source globalID: " + globalIDForObject(source));
 
 			NSArray<String> exposedKeyAttributeNames = exposedKeyAttributeNames(source);
 
@@ -410,14 +411,15 @@ public interface COCopyable
 				if (exposedKeyAttributeNames.containsObject(attributeName))
 				{
 					if (log.isDebugEnabled())
-						log.debug("Nulling exposed key: " + attributeName);
+						log.debug("Method: copyAttributes/ nulling exposed key (attributeName): " + attributeName);
 					destination.takeStoredValueForKey(null, attributeName);
 				}
 				else
 				{
-					if (isAttributeCopyable(entity.attributeNamed(attributeName))){
+					if (isAttributeCopyable(entity.attributeNamed(attributeName)))
+					{
 						if (log.isDebugEnabled())
-							log.debug("Copying attribute: " + attributeName + ", value: " + source.valueForKey(attributeName));
+							log.debug("Method: copyAttributes/ attribute: " + attributeName + " / value: " + source.valueForKey(attributeName));
 						destination.takeStoredValueForKey(source.storedValueForKey(attributeName), attributeName);
 					}
 				}
@@ -427,18 +429,30 @@ public interface COCopyable
 		/**
 		 * This returns true if the attribute can be copied or not. It reads the userInfo of the attribute entity
 		 * and looks for the key "isAttributeCopyable".<p>
-		 * It's often use for information like order id or invoice id that must not be copied and must be regenrated.
+		 * It's often use for information like order id or invoice id that must not be copied and must be regenerated.
 		 * 
 		 * @param attribute
-		 * @return <code>true> if the attribute can be copied.
+		 * @return <code>true</code> if the attribute can be copied.
 		 */
-		private static boolean isAttributeCopyable(final EOAttribute attribute){
+		private static boolean isAttributeCopyable(final EOAttribute attribute)
+		{
 			if (attribute.userInfo() == null)
 				return true;
-			if (!attribute.userInfo().containsKey(isAttributeCopyableKey))
+			return ERXValueUtilities.booleanValueWithDefault(attribute.userInfo().valueForKey(isCopyableKey), true);
+		}
+
+		/**
+		 * This returns true if the relationship can be copied or not. It reads the userInfo of the relationship entity
+		 * and looks for the key "isAttributeCopyable".<p>
+		 * 
+		 * @param attribute
+		 * @return <code>true</code> if the attribute can be copied.
+		 */
+		private static boolean isRelationshipCopyable(final EORelationship relationship)
+		{
+			if (relationship.userInfo() == null)
 				return true;
-			String isAttributeCopyable = (String) attribute.userInfo().valueForKey(isAttributeCopyableKey);
-			return !isAttributeCopyable.equals("false");
+			return ERXValueUtilities.booleanValueWithDefault(relationship.userInfo().valueForKey(isCopyableKey), true);
 		}
 
 		/**
@@ -465,7 +479,7 @@ public interface COCopyable
 			if (exposedKeyAttributeNames == null)
 			{
 				if (log.isDebugEnabled())
-					log.debug("Checking entity: " + entity.name() + " for exposed keys");
+					log.debug("Method: exposedKeyAttributeNames/ checking entity name: " + entity.name() + " for exposed keys");
 				NSMutableSet<String> keyNames = new NSMutableSet<String>();
 				keyNames.addObjectsFromArray(entity.primaryKeyAttributeNames());
 
@@ -482,7 +496,7 @@ public interface COCopyable
 				NSSet<String> publicAttributeNames = new NSSet<String>(source.attributeKeys());
 				exposedKeyAttributeNames = publicAttributeNames.setByIntersectingSet(keyNames).allObjects();
 				if (log.isDebugEnabled())
-					log.debug("--> Attributes: " + exposedKeyAttributeNames + " are exposed, including...");
+					log.debug("Method: exposedKeyAttributeNames/ --> Attributes: " + exposedKeyAttributeNames + " are exposed, including...");
 				exposedKeyAttributeDictionary.setObjectForKey(exposedKeyAttributeNames, entity.name());
 			}
 
@@ -503,7 +517,7 @@ public interface COCopyable
 				final EOEnterpriseObject destination)
 		{
 			if (log.isDebugEnabled())
-				log.debug("Shallow copying relationships for: " + globalIDForObject(source));
+				log.debug("Method: shallowCopyRelatedObjects/ source globalID: " + globalIDForObject(source));
 
 			shallowCopyRelatedToManyObjects(copiedObjects, source, destination);
 			shallowCopyRelatedToOneObjects(copiedObjects, source, destination);
@@ -526,26 +540,30 @@ public interface COCopyable
 		{
 			Enumeration<String> relationshipEnumerator =  source.toManyRelationshipKeys().objectEnumerator();
 			EOClassDescription sourceClassDescription = source.classDescription();
+			EOEntity entity = EOUtilities.entityForObject(source.editingContext(), source);
 
 			while (relationshipEnumerator.hasMoreElements())
 			{
 				String relationshipName = relationshipEnumerator.nextElement();
-				boolean relatedObjectOwned = sourceClassDescription.ownsDestinationObjectsForRelationshipKey(relationshipName);
-
-				NSArray<EOEnterpriseObject> originalObjects = (NSArray<EOEnterpriseObject>)source.valueForKey(relationshipName);
-
-				if (log.isDebugEnabled())
-					log.debug("Method: shallowCopyRelatedToManyObjects: copying " + originalObjects.count() + " originalObjects for relationship: " + relationshipName);
-
-				for (int i = 0, count = originalObjects.count(); i < count; i++)
+				if (isRelationshipCopyable(entity.relationshipNamed(relationshipName)))
 				{
-					EOEnterpriseObject copyRelated;
-					EOEnterpriseObject originalRelated =  originalObjects.objectAtIndex(i);
-					if (relatedObjectOwned)
-						copyRelated = shallowCopy(copiedObjects, originalRelated);
-					else
-						copyRelated = referenceCopy(originalRelated);
-					destination.addObjectToBothSidesOfRelationshipWithKey(copyRelated, relationshipName);
+					boolean relatedObjectOwned = sourceClassDescription.ownsDestinationObjectsForRelationshipKey(relationshipName);
+
+					NSArray<EOEnterpriseObject> originalObjects = (NSArray<EOEnterpriseObject>)source.valueForKey(relationshipName);
+
+					if (log.isDebugEnabled())
+						log.debug("Method: shallowCopyRelatedToManyObjects: copying " + originalObjects.count() + " originalObjects for relationship: " + relationshipName);
+
+					for (int i = 0, count = originalObjects.count(); i < count; i++)
+					{
+						EOEnterpriseObject copyRelated;
+						EOEnterpriseObject originalRelated =  originalObjects.objectAtIndex(i);
+						if (relatedObjectOwned)
+							copyRelated = shallowCopy(copiedObjects, originalRelated);
+						else
+							copyRelated = referenceCopy(originalRelated);
+						destination.addObjectToBothSidesOfRelationshipWithKey(copyRelated, relationshipName);
+					}
 				}
 			}
 		}
@@ -566,25 +584,29 @@ public interface COCopyable
 		{
 			Enumeration<String> relationshipEnumerator = source.toOneRelationshipKeys().objectEnumerator();
 			EOClassDescription sourceClassDescription = source.classDescription();
+			EOEntity entity = EOUtilities.entityForObject(source.editingContext(), source);
 
 			while (relationshipEnumerator.hasMoreElements())
 			{
 				String relationshipName = relationshipEnumerator.nextElement();
-				EOEnterpriseObject originalRelated = (EOEnterpriseObject)source.valueForKey(relationshipName);
-				if (originalRelated != null)
+				if (isRelationshipCopyable(entity.relationshipNamed(relationshipName)))
 				{
-					boolean relatedObjectOwned = sourceClassDescription.ownsDestinationObjectsForRelationshipKey(relationshipName);
-					EOEnterpriseObject copyRelated;
-					if (log.isDebugEnabled())
-						log.debug("Method: shallowCopyRelatedToOneObject: copying object: " + source + "for relationship: " + relationshipName + " source owns destination: " + relatedObjectOwned);
-					if (relatedObjectOwned)
-						copyRelated = shallowCopy(copiedObjects, originalRelated);
-					else
+					EOEnterpriseObject originalRelated = (EOEnterpriseObject)source.valueForKey(relationshipName);
+					if (originalRelated != null)
 					{
-						copyRelated = copiedObjects.objectForKey(globalIDForObject(originalRelated));
-						copyRelated = copyRelated != null ? copyRelated: referenceCopy(originalRelated);
+						boolean relatedObjectOwned = sourceClassDescription.ownsDestinationObjectsForRelationshipKey(relationshipName);
+						EOEnterpriseObject copyRelated;
+						if (log.isDebugEnabled())
+							log.debug("Method: shallowCopyRelatedToOneObject: copying object: " + source + "for relationship: " + relationshipName + " source owns destination: " + relatedObjectOwned);
+						if (relatedObjectOwned)
+							copyRelated = shallowCopy(copiedObjects, originalRelated);
+						else
+						{
+							copyRelated = copiedObjects.objectForKey(globalIDForObject(originalRelated));
+							copyRelated = copyRelated != null ? copyRelated: referenceCopy(originalRelated);
+						}
+						destination.addObjectToBothSidesOfRelationshipWithKey(copyRelated, relationshipName);
 					}
-					destination.addObjectToBothSidesOfRelationshipWithKey(copyRelated, relationshipName);
 				}
 			}
 		}
@@ -605,14 +627,14 @@ public interface COCopyable
 				final String copyContext)
 		{
 			if (log.isDebugEnabled())
-				log.debug("Shallow copying relationships for: " + globalIDForObject(source));
+				log.debug("Method: deepCopyRelatedObjects/ source globalID: " + globalIDForObject(source));
 			EOEntity entity = EOUtilities.entityForObject(source.editingContext(),source);
 
 			Enumeration<EORelationship> relationshipEnumerator = entity.relationships().objectEnumerator();
 			while (relationshipEnumerator.hasMoreElements())
 			{
 				EORelationship relationship = relationshipEnumerator.nextElement();
-				if (entity.classProperties().containsObject(relationship))
+				if (entity.classProperties().containsObject(relationship) && isRelationshipCopyable(relationship))
 				{
 					deepCopyRelationship(copiedObjects, source, destination, relationship, copyContext);
 				}
@@ -645,7 +667,7 @@ public interface COCopyable
 			if (relationship.isToMany())
 			{
 				if (log.isDebugEnabled())
-					log.debug("Copying 2-M relationship: " + relationshipName + " from object source: " + globalIDForObject(source));
+					log.debug("Method: deepCopyRelationship/ copying to-many relationship (name): " + relationshipName + " from globalID source: " + globalIDForObject(source));
 
 				@SuppressWarnings("unchecked")
 				NSArray<EOEnterpriseObject> originalObjects = (NSArray<EOEnterpriseObject>)source.valueForKey(relationshipName);
@@ -653,7 +675,7 @@ public interface COCopyable
 				NSArray<EOEnterpriseObject> destinationObjects = (NSArray<EOEnterpriseObject>)destination.valueForKey(relationshipName);
 
 				if (log.isDebugEnabled())
-					log.debug("Copying " + originalObjects.count() + " originalObjects for relationship: " + relationshipName);
+					log.debug("Method: deepCopyRelationship/ copying " + originalObjects.count() + " originalObjects for relationship (name): " + relationshipName);
 
 				for (int i = 0, count = originalObjects.count(); i < count; i++)
 				{
@@ -675,7 +697,7 @@ public interface COCopyable
 			{
 				EOEnterpriseObject original = (EOEnterpriseObject)source.valueForKey(relationshipName);
 				if (log.isDebugEnabled())
-					log.debug("Copying 2-1 relationship: " + relationshipName + " from object: " + globalIDForObject(source));
+					log.debug("Method: deepCopyRelationship/ copying to-One relationship: " + relationshipName + " from globalID source: " + globalIDForObject(source) + " with original: " + original);
 
 				if (original != null)
 				{
