@@ -24,6 +24,7 @@ public class COAuthenticationFactory {
 
 	public enum AuthenticationStrategyType {
 		SIMPLE(new COSimpleAuthentication()),
+		BCRYPT(new COBCryptAuthentication()),
 		DIGESTED(new CODigestedPasswordAuthentication()),
 		ENCRYPTED(new COEncryptedPasswordAuthentication()),
 		LDAP(new COLDAPAuthentication());
