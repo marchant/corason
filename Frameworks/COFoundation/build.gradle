@@ -1,0 +1,28 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.xyrality.gradle:gradle-wonder-plugin:1.0.0'
+    }
+}
+
+version = '1.0.0'
+
+apply plugin: 'woframework'
+
+wonder {
+    wonderVersion = 'sophiacom'
+    webobjectsVersion = '5.4.3'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'wonder.businesslogic', name: 'ERCoreBusinessLogic', version: wonder.wonderVersion
+}
