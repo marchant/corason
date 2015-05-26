@@ -13,9 +13,13 @@ version = '1.0.0'
 
 apply plugin: 'woframework'
 
-wonder {
-    wonderVersion = 'sophiacom'
-    webobjectsVersion = '5.4.3'
+project.with {
+    sourceSets {
+        main {
+            java { srcDirs = ['Sources/main']}
+            resources { srcDirs = ['Resources']}
+        }
+    }
 }
 
 repositories {
