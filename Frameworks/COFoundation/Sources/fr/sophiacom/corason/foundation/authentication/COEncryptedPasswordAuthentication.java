@@ -8,6 +8,8 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
+import org.apache.commons.codec.binary.Base64;
+
 import com.webobjects.foundation.NSDictionary;
 import com.webobjects.foundation.NSForwardException;
 
@@ -70,13 +72,12 @@ public class COEncryptedPasswordAuthentication implements COActionAuthenticates 
 			Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
 			pbeCipher.init(mode, secretKey, obfuscator);
 
-			//FIXME: Replace sun.misc.BASE64Encoder by http://www.source-code.biz/snippets/java/2.htm for example
 			if (mode == Cipher.ENCRYPT_MODE) {
 				byte[] processedBytes = pbeCipher.doFinal(inputString.getBytes());
-				transformedString = new sun.misc.BASE64Encoder().encode(processedBytes);
+				transformedString = new String(Base64.encodeBase64(processedBytes));
 			}
 			else {
-				byte[] bytesToProcess = new sun.misc.BASE64Decoder().decodeBuffer(inputString);
+				byte[] bytesToProcess = Base64.decodeBase64(inputString);
 				transformedString = new String(pbeCipher.doFinal(bytesToProcess));
 			}
 		}

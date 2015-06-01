@@ -13,15 +13,6 @@ version = '1.0.0'
 
 apply plugin: 'woframework'
 
-project.with {
-    sourceSets {
-        main {
-            java { srcDirs = ['Sources/main']}
-            resources { srcDirs = ['Resources']}
-        }
-    }
-}
-
 repositories {
     mavenLocal()
     mavenCentral()
@@ -29,4 +20,5 @@ repositories {
 
 dependencies {
     compile group: 'wonder.businesslogic', name: 'ERCoreBusinessLogic', version: wonder.wonderVersion
+    compile 'commons-codec:commons-codec:1.10'
 }

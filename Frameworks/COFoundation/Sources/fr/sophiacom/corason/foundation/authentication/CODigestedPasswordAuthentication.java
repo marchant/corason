@@ -4,6 +4,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Base64;
+
 import com.webobjects.foundation.NSForwardException;
 
 /**
@@ -50,7 +52,7 @@ public class CODigestedPasswordAuthentication implements COActionAuthenticates {
         
         try {
             MessageDigest md = MessageDigest.getInstance("SHA");
-            digestedString =  new sun.misc.BASE64Encoder().encode(md.digest(aString.getBytes()));
+            digestedString = new String(Base64.encodeBase64(md.digest(aString.getBytes())));
         }
         catch (NoSuchAlgorithmException e) {
             throw new NSForwardException(e);
