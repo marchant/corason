@@ -172,7 +172,7 @@ public class COUtilities
 	 */
 	public static String cleanStringForArrayAttribute(final String value)
 	{
-		String aString = ERXStringUtilities.escapeSpace(value);
+		String aString = ERXStringUtilities.removeSpaces(value);
 		// Remove extra ,
 		if (!ERXStringUtilities.stringIsNullOrEmpty(aString))
 		{
