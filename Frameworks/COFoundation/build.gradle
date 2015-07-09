@@ -1,16 +1,3 @@
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'com.xyrality.gradle:gradle-wonder-plugin:1.0.0'
-    }
-}
-
-version = '1.0.0'
-
 apply plugin: 'woframework'
 
 repositories {
